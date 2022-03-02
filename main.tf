@@ -1,8 +1,7 @@
-/*
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "~> 4.0.0"
     }
     random = {
@@ -11,23 +10,24 @@ terraform {
     }
   }
 }
+
 provider "aws" {
   region = var.region
 }
+
 resource "random_pet" "petname" {
-  length    = 3
+  length    = 4
   separator = "-"
 }
-*/
 
-resource "aws_s3_bucket" "prod" {
-  bucket = "${var.prod_prefix}-${random_pet.petname.id}"
+resource "aws_s3_bucket" "bucket" {
+  bucket = "${var.prefix}-${random_pet.petname.id}"
 
   force_destroy = true
 }
 
-resource "aws_s3_bucket_website_configuration" "prod" {
-  bucket = aws_s3_bucket.prod.id
+resource "aws_s3_bucket_website_configuration" "bucket" {
+  bucket = aws_s3_bucket.bucket.id
 
   index_document {
     suffix = "index.html"
@@ -38,14 +38,14 @@ resource "aws_s3_bucket_website_configuration" "prod" {
   }
 }
 
-resource "aws_s3_bucket_acl" "prod" {
-  bucket = aws_s3_bucket.prod.id
+resource "aws_s3_bucket_acl" "bucket" {
+  bucket = aws_s3_bucket.bucket.id
 
   acl = "public-read"
 }
 
-resource "aws_s3_bucket_policy" "prod" {
-  bucket = aws_s3_bucket.prod.id
+resource "aws_s3_bucket_policy" "bucket" {
+  bucket = aws_s3_bucket.bucket.id
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -58,7 +58,7 @@ resource "aws_s3_bucket_policy" "prod" {
                 "s3:GetObject"
             ],
             "Resource": [
-                "arn:aws:s3:::${aws_s3_bucket.prod.id}/*"
+                "arn:aws:s3:::${aws_s3_bucket.bucket.id}/*"
             ]
         }
     ]
@@ -66,10 +66,10 @@ resource "aws_s3_bucket_policy" "prod" {
 EOF
 }
 
-resource "aws_s3_object" "prod" {
+resource "aws_s3_object" "webapp" {
   acl          = "public-read"
   key          = "index.html"
-  bucket       = aws_s3_bucket.prod.id
+  bucket       = aws_s3_bucket.bucket.id
   content      = file("${path.module}/assets/index.html")
   content_type = "text/html"
 }
