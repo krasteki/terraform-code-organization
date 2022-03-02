@@ -10,24 +10,23 @@ terraform {
     }
   }
 }
-
 provider "aws" {
   region = var.region
 }
-
 resource "random_pet" "petname" {
-  length    = 4
+  length    = 3
   separator = "-"
 }
 
-resource "aws_s3_bucket" "dev" {
-  bucket = "${var.dev_prefix}-${random_pet.petname.id}"
+
+resource "aws_s3_bucket" "prod" {
+  bucket = "${var.prod_prefix}-${random_pet.petname.id}"
 
   force_destroy = true
 }
 
-resource "aws_s3_bucket_website_configuration" "dev" {
-  bucket = aws_s3_bucket.dev.id
+resource "aws_s3_bucket_website_configuration" "prod" {
+  bucket = aws_s3_bucket.prod.id
 
   index_document {
     suffix = "index.html"
@@ -38,14 +37,14 @@ resource "aws_s3_bucket_website_configuration" "dev" {
   }
 }
 
-resource "aws_s3_bucket_acl" "dev" {
-  bucket = aws_s3_bucket.dev.id
+resource "aws_s3_bucket_acl" "prod" {
+  bucket = aws_s3_bucket.prod.id
 
   acl = "public-read"
 }
 
-resource "aws_s3_bucket_policy" "dev" {
-  bucket = aws_s3_bucket.dev.id
+resource "aws_s3_bucket_policy" "prod" {
+  bucket = aws_s3_bucket.prod.id
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -58,7 +57,7 @@ resource "aws_s3_bucket_policy" "dev" {
                 "s3:GetObject"
             ],
             "Resource": [
-                "arn:aws:s3:::${aws_s3_bucket.dev.id}/*"
+                "arn:aws:s3:::${aws_s3_bucket.prod.id}/*"
             ]
         }
     ]
@@ -66,10 +65,10 @@ resource "aws_s3_bucket_policy" "dev" {
 EOF
 }
 
-resource "aws_s3_object" "dev" {
+resource "aws_s3_object" "prod" {
   acl          = "public-read"
   key          = "index.html"
-  bucket       = aws_s3_bucket.dev.id
-  content      = file("${path.module}/assets/index.html")
+  bucket       = aws_s3_bucket.prod.id
+  content      = file("${path.module}/..assets/index.html")
   content_type = "text/html"
 }
